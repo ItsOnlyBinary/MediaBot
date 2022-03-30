@@ -4,8 +4,6 @@ module.exports = class youtube {
 
     constructor(bot, config, channels, dbCon) {
 
-        this.youtubeRegex = /((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)(?<ytID>[\w\-]+)(\S+)?/i;
-
         bot.on('message', async (event) => {
 
             if (event.from_server) {
@@ -22,13 +20,14 @@ module.exports = class youtube {
                 return;
             };
 
-            const match = event.message.match(this.youtubeRegex);
-            if (!match || !match.groups.ytID) {
+
+            const videoID = tubefetch.getYoutubeVideoID(event.message);
+            if (!videoID) {
                 console.log('returning from match');
                 return;
             }
 
-            const info = await tubefetch.getYoutubeInfo(match.groups.ytID);
+            const info = await tubefetch.getYoutubeInfo(videoID);
             if (!info) {
                 return;
             }
@@ -36,7 +35,7 @@ module.exports = class youtube {
             const mediUrl = new URL('https://www.simosnap.org/channel/' + encodeURIComponent(event.target) + '/profile#mediabot');
 
             const tagData = [
-                match.groups.ytID,
+                videoID,
                 info.contentDetails.duration,
                 info.snippet.channelId,
                 info.snippet.channelTitle,
@@ -50,7 +49,7 @@ module.exports = class youtube {
             }
 
             let ts = Math.round((new Date()).getTime() / 1000);
-            dbCon.query('INSERT INTO magirc_mediabot_media_logs (media_id, title, thumbnail, nickname, account, channel, ychannel, ychanneltitle, duration, ts, type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [match.groups.ytID, tubefetch.removeEmojis(info.snippet.title) , info.snippet.thumbnails.default.url, event.nick, event.tags.account, event.target, info.snippet.channelId, info.snippet.channelTitle, info.contentDetails.duration, ts, 'youtube'  ], async function (error, results, fields) {
+            dbCon.query('INSERT INTO magirc_mediabot_media_logs (media_id, title, thumbnail, nickname, account, channel, ychannel, ychanneltitle, duration, ts, type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [videoID, tubefetch.removeEmojis(info.snippet.title) , info.snippet.thumbnails.default.url, event.nick, event.tags.account, event.target, info.snippet.channelId, info.snippet.channelTitle, info.contentDetails.duration, ts, 'youtube'  ], async function (error, results, fields) {
                 if (error) throw error;
             });
             return;

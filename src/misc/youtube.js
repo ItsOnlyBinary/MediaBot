@@ -1,5 +1,7 @@
 const fetch = require('node-fetch');
 
+const youtubeRegex = /((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)(?<videoID>[\w\-]+)(\S+)?/i;
+
 exports.getYoutubeInfo = (ytID) => {
     const url = new URL('https://www.googleapis.com/youtube/v3/videos');
     url.searchParams.append('key', 'AIzaSyD51W7fE9mxBwl6EF31b-xZeFNG8rfEU_I');
@@ -15,6 +17,11 @@ exports.getYoutubeInfo = (ytID) => {
 
             return j.items[0];
         });
+}
+
+exports.getYoutubeVideoID = function (string) {
+    const match = youtubeRegex.exec(decodeURI(string));
+    return match?.groups?.videoID;
 }
 
 exports.removeEmojis = (string) => {
